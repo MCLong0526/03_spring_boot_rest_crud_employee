@@ -2,6 +2,7 @@ package com.michael.cruddemo.rest;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.michael.cruddemo.entity.Employee;
 import com.michael.cruddemo.service.EmployeeService;
 import org.springframework.web.bind.annotation.*;
@@ -85,8 +86,21 @@ public class EmployeeRestController {
         if(updates.containsKey("id")){
             throw new RuntimeException("Cannot update employee id - " + id);
         }
-        Employee updatedEmployee = objectMapper.updateValue(employee, updates);
+        Employee updatedEmployee = apply(updates, employee);
+//        Employee updatedEmployee = objectMapper.updateValue(employee, updates);
         return employeeService.save(updatedEmployee);
+    }
+
+    private Employee apply(Map<String, Object> updates, Employee employee){
+        // Convert Employee to JSON object node
+        ObjectNode employeeNode = objectMapper.convertValue(employee, ObjectNode.class);
+
+        // Convert updates map to JSON object node
+        ObjectNode updatesNode = objectMapper.convertValue(updates, ObjectNode.class);
+
+        // merge the patch updates into the employee object
+        employeeNode.setAll(updatesNode);
+        return objectMapper.convertValue(employeeNode, Employee.class);
     }
 
 
